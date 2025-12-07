@@ -184,9 +184,9 @@ double GameState::getPayoff(const std::vector<int> &p0,
     int s0 = eval.evaluateHandRaw(h0, b);
     int s1 = eval.evaluateHandRaw(h1, b);
 
-    if (s0 > s1)
+    if (s0 < s1) // smaller number means stronger
       return pot - p0_in;
-    if (s0 < s1)
+    if (s0 > s1)
       return -p0_in;
   }
   return 0.0;

@@ -11,7 +11,7 @@ int main() {
   std::cout << "[2] Initializing CFR Solver..." << std::endl;
   Solver solver(evaluator);
 
-  int iterations = 250000;
+  int iterations = 100000;
 
   std::cout << "[3] Starting MCCFR for " << iterations << " iterations..."
             << std::endl;
