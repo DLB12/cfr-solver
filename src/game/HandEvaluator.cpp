@@ -103,7 +103,7 @@ static Card intToCard(int id) {
   Card::SUIT suit = suitFromIndex(suitIndex);
 
   // Adjust this line if your Card constructor signature is different
-  return Card(suit, value);
+  return Card(static_cast<Card::RANK>(value), suit);
 }
 
 // Integer based evaluate - for CFR where cards are 0..51
@@ -121,4 +121,3 @@ int HandEvaluator::evaluateHandInts(const std::array<int, 2> &handIdx,
 
   return evaluateHand(handCards, boardCards);
 }
-

@@ -130,8 +130,16 @@ double GameState::getPayoff(const std::vector<int> &p0,
   }
 
   if (street == Street::SHOWDOWN) {
-    int s0 = eval.evaluateHand(p0, board);
-    int s1 = eval.evaluateHand(p1, board);
+    std::array<int, 2> h0 = {p0[0], p0[1]};
+    std::array<int, 2> h1 = {p1[0], p1[1]};
+    std::array<int, 5> b;
+
+    if (board.size() >= 5) {
+      std::copy_n(board.begin(), 5, b.begin());
+    }
+
+    int s0 = eval.evaluateHandInts(h0, b);
+    int s1 = eval.evaluateHandInts(h1, b);
     if (s0 > s1)
       return pot - p0_in;
     if (s0 < s1)

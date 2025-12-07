@@ -18,4 +18,3 @@ private:
   std::array<Card, 7> mergeHand(const std::array<Card, 2> &hand,
                                 const std::array<Card, 5> &communityCards);
 };
-
