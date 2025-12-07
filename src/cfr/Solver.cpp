@@ -3,8 +3,6 @@
 #include <fstream>
 #include <iostream>
 
-extern int cardToInt(const Card &c);
-
 Solver::Solver(HandEvaluator &eval) : evaluator_(eval) {}
 
 CFRNode *Solver::getNode(uint64_t infoSetHash, const GameState &state,
@@ -48,7 +46,7 @@ double Solver::cfr(GameState &state, std::vector<int> &p0_cards,
   uint64_t infoSetHash = state.getInfoSetKeyHash(my_cards);
   CFRNode *node = getNode(infoSetHash, state, my_cards);
 
-  node->visits++; // Count visits
+  node->visits++;
 
   // Regret Matching
   std::vector<double> strategy(node->legalActions.size());
@@ -95,7 +93,6 @@ void Solver::train(int iterations) {
       deck_.popTop();
       deck_.popTop();
 
-      // Save the board
       for (int k = 0; k < 5; ++k)
         s.board.push_back(deck_.popTop());
       scenarios_.push_back(s);
@@ -148,7 +145,7 @@ void Solver::saveStrategy(const std::string &filename) {
   for (auto &pair : nodeMap_) {
     CFRNode &node = pair.second;
 
-    // PRUNE NODES
+    // Node pruning before data
     if (node.visits < 35)
       continue;
     saved_count++;

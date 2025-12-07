@@ -1,7 +1,5 @@
-#include <algorithm>
 #include <array>
 #include <random>
-#include <stdexcept>
 
 class Deck {
 public:

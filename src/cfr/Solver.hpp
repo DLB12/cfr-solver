@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../cards/Deck.hpp"
-#include "../game/GameState.hpp"
+#include "Deck.hpp"
+#include "GameState.hpp"
 #include <string>
 #include <unordered_map>
 #include <vector>

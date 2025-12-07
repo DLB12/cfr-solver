@@ -1,5 +1,4 @@
 #pragma once
-#include "../cards/Card.hpp"
 #include "HandEvaluator.hpp"
 #include <array>
 #include <cstdint>
@@ -28,14 +27,10 @@ struct FixedActions {
 
   int size() const { return count; }
 
-  // Iterators allow this to work with for-loops and standard algorithms
   const Action *begin() const { return data.data(); }
   const Action *end() const { return data.data() + count; }
   const Action &operator[](int i) const { return data[i]; }
 };
-
-// Global helper to bridge Card class and Solver ints
-int cardToInt(const Card &c);
 
 class GameState {
 public:

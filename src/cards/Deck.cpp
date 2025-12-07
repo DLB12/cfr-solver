@@ -1,5 +1,7 @@
 #include "Deck.hpp"
+#include <algorithm>
 #include <iostream>
+#include <stdexcept>
 
 Deck::Deck() : cards{}, rng(std::random_device{}()), activeSize(52) {
   for (int i = 0; i < 52; ++i) {
