@@ -97,7 +97,7 @@ void Solver::train(int iterations) {
 
       // Save the board
       for (int k = 0; k < 5; ++k)
-        s.board.push_back(cardToInt(deck_.popTop()));
+        s.board.push_back(deck_.popTop());
       scenarios_.push_back(s);
     }
   }
@@ -110,7 +110,7 @@ void Solver::train(int iterations) {
     std::vector<int> p0, p1;
 
     while (p0.size() < 2) {
-      int c = cardToInt(deck_.popTop());
+      int c = deck_.popTop();
       bool collision = false;
       for (int b : iteration_board_)
         if (b == c)
@@ -120,7 +120,7 @@ void Solver::train(int iterations) {
     }
 
     while (p1.size() < 2) {
-      int c = cardToInt(deck_.popTop());
+      int c = deck_.popTop();
       bool collision = false;
       for (int b : iteration_board_)
         if (b == c)
@@ -173,7 +173,8 @@ void Solver::saveStrategy(const std::string &filename) {
         pRaise = avg[i];
     }
 
-    file << pair.first << "," << pFold << "," << pCall << "," << pRaise << "\n";
+    file << node.infoSetKeyString << "," << pFold << "," << pCall << ","
+         << pRaise << "\n";
   }
   file.close();
   std::cout << "Strategy saved to " << filename << " (" << saved_count

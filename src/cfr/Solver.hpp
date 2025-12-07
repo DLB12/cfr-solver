@@ -17,7 +17,7 @@ struct CFRNode {
   std::string infoSetKeyString;
   std::vector<double> strategySum;
   FixedActions legalActions;
-  int visits; // Track visits for pruning/debugging
+  int visits;
 
   CFRNode() : visits(0) {}
   CFRNode(int num_actions)

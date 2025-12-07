@@ -1,23 +1,21 @@
-#pragma once
-
-#include "Card.hpp"
+#include <algorithm>
 #include <array>
 #include <random>
+#include <stdexcept>
 
 class Deck {
-private:
-  std::array<Card, 52> cards;
-  size_t activeSize;
-  std::mt19937 rng;
-
 public:
   Deck();
-  Card popTop();
+
+  int popTop();
+
   void shuffle();
+
   int getLength() const;
-  void restore(int size) {
-    if (size < 0 || size > 52)
-      throw std::out_of_range("Invalid deck size");
-    activeSize = size;
-  }
+
+private:
+  std::array<int, 52> cards;
+
+  std::mt19937 rng;
+  int activeSize;
 };
