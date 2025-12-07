@@ -18,12 +18,16 @@ CFRNode *Solver::getNode(const std::string &infoSet, const GameState &state) {
 
 double Solver::cfr(GameState &state, std::vector<int> &p0_cards,
                    std::vector<int> &p1_cards) {
+  // [FIX] 1. Capture the deck state before doing anything
+  int initialDeckSize = deck_.getLength();
+
   if (state.isTerminal()) {
     return state.getPayoff(p0_cards, p1_cards, evaluator_);
   }
 
   // Chance Sampling: Deal board cards if needed
   int cards_needed = 0;
+  // Assuming Street enum: PRE=0, FLOP=1, TURN=2, RIVER=3
   if (state.street == Street::FLOP && state.board.empty())
     cards_needed = 3;
   else if ((state.street == Street::TURN || state.street == Street::RIVER) &&
@@ -92,9 +96,11 @@ double Solver::cfr(GameState &state, std::vector<int> &p0_cards,
     node->strategySum[a] += strategy[a];
   }
 
+  // [FIX] 2. Restore the deck index so sibling branches use the same cards
+  deck_.restore(initialDeckSize);
+
   return nodeUtil;
 }
-
 void Solver::train(int iterations) {
   for (int i = 0; i < iterations; ++i) {
     deck_.shuffle();
