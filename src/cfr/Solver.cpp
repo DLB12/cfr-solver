@@ -5,23 +5,32 @@
 
 Solver::Solver(HandEvaluator &eval) : evaluator_(eval) {}
 
-CFRNode *Solver::getNode(uint64_t infoSetHash, const GameState &state,
+CFRNode *Solver::getNode(uint64_t hash, const GameState &state,
                          const std::vector<int> &my_cards) {
-  auto it = nodeMap_.find(infoSetHash);
+  auto it = nodeMap_.find(hash);
 
   if (it == nodeMap_.end()) {
-    auto legal = state.getLegalActions();
+    auto &node = nodeMap_[hash];
 
-    auto &node = nodeMap_[infoSetHash];
-    node.infoSetKeyString = state.getInfoSetKey(my_cards);
+    std::vector<int> sorted = my_cards;
+    if (sorted[0] > sorted[1])
+      std::swap(sorted[0], sorted[1]);
+    node.key.c1 = static_cast<uint8_t>(sorted[0]);
+    node.key.c2 = static_cast<uint8_t>(sorted[1]);
+    std::memset(node.key.board, 0, 5);
+    for (size_t i = 0; i < state.board.size(); ++i) {
+      node.key.board[i] = static_cast<uint8_t>(state.board[i]);
+    }
 
-    node.legalActions = legal;
-    node.regretSum.resize(legal.size(), 0.0);
-    node.strategySum.resize(legal.size(), 0.0);
+    int len = std::min((int)sizeof(node.key.history) - 1, state.history_length);
+    std::memcpy(node.key.history, state.history, len);
+    node.key.history[len] = '\0';
 
+    node.legalActions = state.getLegalActions();
+    node.regretSum.resize(node.legalActions.size(), 0.0);
+    node.strategySum.resize(node.legalActions.size(), 0.0);
     return &node;
   }
-
   return &it->second;
 }
 
@@ -84,8 +93,8 @@ double Solver::cfr(GameState &state, std::vector<int> &p0_cards,
 
 void Solver::train(int iterations) {
   if (scenarios_.empty()) {
-    std::cout << "[Solver] Generating 20 fixed BOARDS..." << std::endl;
-    for (int i = 0; i < 20; ++i) {
+    std::cout << "[Solver] Generating 50 fixed BOARDS..." << std::endl;
+    for (int i = 0; i < 50; ++i) {
       deck_.shuffle();
       TrainingScenario s;
       deck_.popTop();
@@ -139,14 +148,15 @@ void Solver::train(int iterations) {
 
 void Solver::saveStrategy(const std::string &filename) {
   std::ofstream file(filename);
-  file << "InfoSet,Fold,CheckCall,BetRaise\n";
+
+  file << "C1,C2,B1,B2,B3,B4,B5,History,Fold,CheckCall,BetRaise\n";
 
   int saved_count = 0;
   for (auto &pair : nodeMap_) {
     CFRNode &node = pair.second;
 
     // Node pruning before data
-    if (node.visits < 35)
+    if (node.visits < 70)
       continue;
     saved_count++;
 
@@ -170,8 +180,13 @@ void Solver::saveStrategy(const std::string &filename) {
         pRaise = avg[i];
     }
 
-    file << node.infoSetKeyString << "," << pFold << "," << pCall << ","
-         << pRaise << "\n";
+    file << (int)node.key.c1 << "," << (int)node.key.c2 << ",";
+    file << (int)node.key.board[0] << "," << (int)node.key.board[1] << ","
+         << (int)node.key.board[2] << "," << (int)node.key.board[3] << ","
+         << (int)node.key.board[4] << ",";
+    file << node.key.history << ",";
+
+    file << pFold << "," << pCall << "," << pRaise << "\n";
   }
   file.close();
   std::cout << "Strategy saved to " << filename << " (" << saved_count

@@ -41,7 +41,9 @@ public:
   std::array<double, 2> bets;
   std::array<double, 2> stack;
   std::vector<int> board;
-  std::string history;
+  static constexpr int MAX_HISTORY_LENGTH = 64;
+  char history[MAX_HISTORY_LENGTH] = "";
+  int history_length = 0;
   int active_player;
   int raises_this_street;
   bool is_folded;

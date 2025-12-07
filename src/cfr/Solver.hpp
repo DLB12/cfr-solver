@@ -12,9 +12,16 @@ struct TrainingScenario {
   std::vector<int> board;
 };
 
+struct InfoSetKey {
+  uint8_t c1;
+  uint8_t c2;
+  uint8_t board[5];
+  char history[24];
+};
+
 struct CFRNode {
   std::vector<double> regretSum;
-  std::string infoSetKeyString;
+  InfoSetKey key;
   std::vector<double> strategySum;
   FixedActions legalActions;
   int visits;

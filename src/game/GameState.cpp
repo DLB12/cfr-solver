@@ -8,7 +8,7 @@ GameState::GameState() {
   bets = {SMALL_BLIND, BIG_BLIND};
   active_player = 0;
   board.reserve(5);
-  history = "";
+  history_length = 0;
   raises_this_street = 0;
   is_folded = false;
 }
@@ -31,9 +31,9 @@ GameState::getInfoSetKeyHash(const std::vector<int> &hole_cards) const {
     hash = (hash * P1) + c;
   }
 
-  hash = (hash * P2) + history.length();
-  for (char h : history) {
-    hash = (hash * P2) + (uint64_t)h;
+  hash = (hash * P2) + history_length;
+  for (int i = 0; i < history_length; ++i) {
+    hash = (hash * P2) + (uint64_t)history[i];
   }
 
   return hash;
@@ -73,7 +73,8 @@ FixedActions GameState::getLegalActions() const {
 void GameState::applyAction(const Action &action) {
   if (action.type == ActionType::FOLD) {
     is_folded = true;
-    history += "f";
+    history[history_length++] = 'f';
+    history[history_length] = '\0';
     return;
   }
 
@@ -82,23 +83,24 @@ void GameState::applyAction(const Action &action) {
   pot += action.amount;
 
   if (action.type == ActionType::BET_RAISE) {
-    history += "r";
+    history[history_length++] = 'r';
+    history[history_length] = '\0';
     raises_this_street++;
+
     active_player = 1 - active_player;
   } else {
-    history += (action.amount > 0) ? "c" : "k";
+    history[history_length++] = (action.amount > 0) ? 'c' : 'k';
+    history[history_length] = '\0';
 
-    if (bets[0] == bets[1]) {
+    if (std::abs(bets[0] - bets[1]) < 1e-9) {
       bool street_over = false;
 
       if (street == Street::PREFLOP) {
-        // Round ends if bets > 1BB (raise called) or BB checks option
-        if (bets[0] == BIG_BLIND)
+        if (std::abs(bets[0] - BIG_BLIND) < 1e-9)
           street_over = (active_player == 1);
         else
           street_over = true;
       } else {
-        // Round ends if P0 (Dealer) acts, or P1 calls a bet
         if (active_player == 0)
           street_over = true;
         else
@@ -129,8 +131,10 @@ void GameState::nextStreet() {
   else if (street == Street::RIVER)
     street = Street::SHOWDOWN;
 
-  if (street != Street::SHOWDOWN)
-    history += "/";
+  if (street != Street::SHOWDOWN) {
+    history[history_length++] = '/';
+    history[history_length] = '\0';
+  }
 }
 
 std::string GameState::getInfoSetKey(const std::vector<int> &hole_cards) const {
@@ -138,23 +142,25 @@ std::string GameState::getInfoSetKey(const std::vector<int> &hole_cards) const {
   if (sorted[0] > sorted[1])
     std::swap(sorted[0], sorted[1]);
 
-  std::string key;
-  key.reserve(128);
+  char buffer[128];
+  char *ptr = buffer;
 
-  key += std::to_string(sorted[0]);
-  key += "_";
-  key += std::to_string(sorted[1]);
-  key += "|";
+  // hole cards
+  ptr +=
+      std::snprintf(ptr, 128 - (ptr - buffer), "%d_%d|", sorted[0], sorted[1]);
 
+  // board
   for (int c : board) {
-    key += std::to_string(c);
-    key += "_";
+    ptr += std::snprintf(ptr, 128 - (ptr - buffer), "%d_", c);
   }
-  key += "|";
+  ptr += std::snprintf(ptr, 128 - (ptr - buffer), "|");
 
-  key += history;
+  // copy history into pointer buffer
+  std::memcpy(ptr, history, history_length);
+  ptr += history_length;
+  *ptr = '\0';
 
-  return key;
+  return std::string(buffer);
 }
 
 double GameState::getPayoff(const std::vector<int> &p0,
