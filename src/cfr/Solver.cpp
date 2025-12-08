@@ -1,8 +1,8 @@
 #include "Solver.hpp"
 #include <cstdint>
+#include <cstring>
 #include <fstream>
 #include <iostream>
-#include <cstring>
 
 Solver::Solver(HandEvaluator &eval) : evaluator_(eval) {}
 
@@ -144,7 +144,7 @@ void Solver::train(int iterations) {
     GameState root;
     cfr(root, p0, p1);
 
-    if ((i + 1) % 100000 == 0)
+    if ((i + 1) % 50000 == 0)
       std::cout << "Iteration " << (i + 1) << " complete..." << std::endl;
   }
 }
