@@ -93,10 +93,10 @@ double Solver::cfr(GameState &state, std::vector<int> &p0_cards,
 
 void Solver::train(int iterations) {
   if (scenarios_.empty()) {
-    std::cout << "[Solver] Generating 20 fixed BOARDS..." << std::endl;
-    nodeMap_.reserve(50000000);
+    nodeMap_.reserve(500000000);
 
-    for (int i = 0; i < 20; ++i) {
+    std::cout << "[Solver] Generating 15 fixed BOARDS..." << std::endl;
+    for (int i = 0; i < 15; ++i) {
       deck_.shuffle();
       TrainingScenario s;
       deck_.popTop();
@@ -143,7 +143,7 @@ void Solver::train(int iterations) {
     GameState root;
     cfr(root, p0, p1);
 
-    if ((i + 1) % 1000 == 0)
+    if ((i + 1) % 10000 == 0)
       std::cout << "Iteration " << (i + 1) << " complete..." << std::endl;
   }
 }
