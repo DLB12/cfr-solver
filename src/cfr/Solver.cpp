@@ -143,7 +143,7 @@ void Solver::train(int iterations) {
     GameState root;
     cfr(root, p0, p1);
 
-    if ((i + 1) % 10000 == 0)
+    if ((i + 1) % 100000 == 0)
       std::cout << "Iteration " << (i + 1) << " complete..." << std::endl;
   }
 }
@@ -158,7 +158,7 @@ void Solver::saveStrategy(const std::string &filename) {
     CFRNode &node = pair.second;
 
     // Node pruning before data
-    if (node.visits < 70)
+    if (node.visits < 100)
       continue;
     saved_count++;
 
