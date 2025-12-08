@@ -1,9 +1,17 @@
+import logging
 from abc import ABC, abstractmethod
 
 import numpy as np
 import polars as pl
 import sklearn
 from constants import RANDOM_SEED
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+    level=logging.DEBUG,
+)
 
 
 class ModelBase(ABC):
@@ -22,7 +30,7 @@ class ModelBase(ABC):
 
 class MarginalProbabilityModel(ModelBase):
     """
-    Compute marginal probability as a baseline estimate
+    Compute marginal probability as a baseline estimate.
     """
 
     def __init__(self):
@@ -32,6 +40,7 @@ class MarginalProbabilityModel(ModelBase):
         return self.name
 
     def fit(self, x: pl.DataFrame, y: pl.DataFrame) -> None:
+        logger.info(f"Training {self.name}...")
         assert x is not None  # x is not used
         self.marginal_probs = y.to_numpy().mean(axis=0)
 
@@ -42,7 +51,7 @@ class MarginalProbabilityModel(ModelBase):
 
 class UniformProbabilityModel(ModelBase):
     """
-    Compute uniform distribution as a baseline estimate
+    Compute uniform distribution as a baseline estimate.
     """
 
     def __init__(self, n_classes=3):
@@ -53,6 +62,7 @@ class UniformProbabilityModel(ModelBase):
         return self.name
 
     def fit(self, x: pl.DataFrame, y: pl.DataFrame) -> None:
+        logger.info(f"Training {self.name}...")
         assert x is not None  # x is not used
         assert y is not None  # y is not used
 
@@ -66,7 +76,7 @@ class ConstrainedLinearModel(ModelBase):
     Train three regularized linear models for each label and enforce probability axioms.
     """
 
-    def __init__(self, alpha=1.0):
+    def __init__(self, alpha=0.01):
         self.name = "Constrained Linear Model"
         self.model = sklearn.multioutput.MultiOutputRegressor(
             sklearn.linear_model.Lasso(alpha=alpha, random_state=RANDOM_SEED)
@@ -76,7 +86,12 @@ class ConstrainedLinearModel(ModelBase):
         return self.name
 
     def fit(self, x: pl.DataFrame, y: pl.DataFrame) -> None:
+        logger.info(f"Training {self.name}...")
         self.model.fit(x, y)
+        for i, estimator in enumerate(self.model.estimators_):
+            print(f"Output {i+1}:")
+            print(f"  Coefficients: {estimator.coef_}")
+            print(f"  Intercept: {estimator.intercept_}")
 
     def predict(self, x: pl.DataFrame) -> np.typing.NDArray:
         pred = self.model.predict(x)
