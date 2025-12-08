@@ -93,14 +93,15 @@ double Solver::cfr(GameState &state, std::vector<int> &p0_cards,
 
 void Solver::train(int iterations) {
   if (scenarios_.empty()) {
-    std::cout << "[Solver] Generating 30 fixed BOARDS..." << std::endl;
-    for (int i = 0; i < 30; ++i) {
+    std::cout << "[Solver] Generating 20 fixed BOARDS..." << std::endl;
+    nodeMap_.reserve(50000000);
+
+    for (int i = 0; i < 20; ++i) {
       deck_.shuffle();
       TrainingScenario s;
       deck_.popTop();
       deck_.popTop();
       deck_.popTop();
-      nodeMap_.reserve(50000000);
       deck_.popTop();
 
       for (int k = 0; k < 5; ++k)
@@ -157,7 +158,7 @@ void Solver::saveStrategy(const std::string &filename) {
     CFRNode &node = pair.second;
 
     // Node pruning before data
-    if (node.visits < 30)
+    if (node.visits < 70)
       continue;
     saved_count++;
 
