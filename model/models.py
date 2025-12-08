@@ -4,6 +4,7 @@ from abc import ABC, abstractmethod
 import numpy as np
 import polars as pl
 import sklearn
+import xgboost as xgb
 from constants import RANDOM_SEED
 
 logger = logging.getLogger(__name__)
@@ -12,6 +13,8 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S",
     level=logging.DEBUG,
 )
+
+np.random.seed(RANDOM_SEED)
 
 
 class ModelBase(ABC):
@@ -43,6 +46,7 @@ class MarginalProbabilityModel(ModelBase):
         logger.info(f"Training {self.name}...")
         assert x is not None  # x is not used
         self.marginal_probs = y.to_numpy().mean(axis=0)
+        logger.info("Training completed!")
 
     def predict(self, x: pl.DataFrame) -> np.ndarray:
         n_samples = x.height
@@ -65,6 +69,7 @@ class UniformProbabilityModel(ModelBase):
         logger.info(f"Training {self.name}...")
         assert x is not None  # x is not used
         assert y is not None  # y is not used
+        logger.info("Training completed!")
 
     def predict(self, x: pl.DataFrame) -> np.ndarray:
         n_samples = x.height
@@ -88,10 +93,11 @@ class ConstrainedLinearModel(ModelBase):
     def fit(self, x: pl.DataFrame, y: pl.DataFrame) -> None:
         logger.info(f"Training {self.name}...")
         self.model.fit(x, y)
-        for i, estimator in enumerate(self.model.estimators_):
-            print(f"Output {i+1}:")
-            print(f"  Coefficients: {estimator.coef_}")
-            print(f"  Intercept: {estimator.intercept_}")
+        logger.info("Training completed!")
+        # for i, estimator in enumerate(self.model.estimators_):
+        #     print(f"Output {i+1}:")
+        #     print(f"  Coefficients: {estimator.coef_}")
+        #     print(f"  Intercept: {estimator.intercept_}")
 
     def predict(self, x: pl.DataFrame) -> np.typing.NDArray:
         pred = self.model.predict(x)
@@ -106,6 +112,51 @@ class ConstrainedLinearModel(ModelBase):
         return probs
 
 
+class BoostedTreeModel(ModelBase):
+    """
+    Train XGBoost classifier for each action. This is fundamentally different from the
+    regression approach: we are not trying to predict the whole distribution, but rather
+    just the most probable action. Then, we use the prediction probabilities for the most
+    probable action as a proxy for the CFR distribution.
+    """
+
+    def __init__(self):
+        self.name = "Boosted Tree"
+        self.model = xgb.XGBClassifier(
+            n_estimators=500,
+            max_depth=8,
+            learning_rate=0.1,
+            objective="multi:softprob",
+            num_class=3,
+            random_state=RANDOM_SEED,
+            n_jobs=10,
+            tree_method="exact",  # skip quantization
+            verbosity=0,
+        )
+
+    def get_name(self) -> str:
+        return self.name
+
+    def fit(self, x, y):
+        logger.info(f"Training {self.name}...")
+        # TAKE ONLY 200K SAMPLES, 1M -> 0.41 KL
+        sample_size = 200000
+        if len(x) > sample_size:
+            indices = np.random.choice(len(x), sample_size, replace=False)
+            x = x[indices]
+            y = y[indices]
+
+        x_np = x.to_numpy()
+        y_np = y.to_numpy()
+        y_labels = np.argmax(y_np, axis=1)
+
+        self.model.fit(x_np, y_labels)
+        logger.info(f"Trained on {len(x_np)} samples")
+
+    def predict(self, x):
+        return self.model.predict_proba(x.to_numpy())
+
+
 def train_models(x: pl.DataFrame, y: pl.DataFrame) -> list[ModelBase]:
     """
     Cost function: KL divergence. This is appropriate since we are essentially
@@ -118,11 +169,14 @@ def train_models(x: pl.DataFrame, y: pl.DataFrame) -> list[ModelBase]:
         model.fit(x, y)
         trained_models.append(model)
 
-    # baselines: trivial models
+    # # baselines: trivial models
     add_model(MarginalProbabilityModel)
     add_model(UniformProbabilityModel)
 
-    # constrained linear model
+    # # constrained linear model
     add_model(ConstrainedLinearModel)
+
+    # boosted tree model
+    add_model(BoostedTreeModel)
 
     return trained_models
