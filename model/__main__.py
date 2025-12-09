@@ -372,7 +372,7 @@ def main() -> None:
     logger.info("=" * 120)
 
     # hard-coded data path
-    data_path = pathlib.Path(".") / "strategy_output_frozen.csv"
+    data_path = pathlib.Path(".") / "strategy_output_small.csv"
     df_input = pl.read_csv(data_path)
     logger.info(f"Running on raw dataset of shape {df_input.shape}")
 
