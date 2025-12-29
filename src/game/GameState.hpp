@@ -18,7 +18,8 @@ struct Action {
   double amount;
 };
 
-// A lightweight, stack-allocated replacement for std::vector<Action>
+// a lightweight, stack-allocated replacement for action vector
+// TODO: ensure size of 3 is enough for data. i.e. worried about krrc combo.
 struct FixedActions {
   std::array<Action, 3> data;
   int count = 0;
@@ -41,6 +42,7 @@ public:
   std::array<double, 2> bets;
   std::array<double, 2> stack;
   std::vector<int> board;
+  // changed to c string to be more lightweight
   static constexpr int MAX_HISTORY_LENGTH = 64;
   char history[MAX_HISTORY_LENGTH] = "";
   int history_length = 0;

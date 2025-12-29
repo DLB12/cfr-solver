@@ -16,6 +16,7 @@ GameState::GameState() {
 
 uint64_t
 GameState::getInfoSetKeyHash(const std::vector<int> &hole_cards) const {
+  // sort hole cards to ensure uniformity of features
   std::vector<int> sorted = hole_cards;
   if (sorted[0] > sorted[1])
     std::swap(sorted[0], sorted[1]);
@@ -45,7 +46,7 @@ bool GameState::isTerminal() const {
 }
 
 FixedActions GameState::getLegalActions() const {
-  FixedActions actions; // Stack allocated
+  FixedActions actions; // stack allocated
 
   if (isTerminal()) {
     return actions;
@@ -59,6 +60,7 @@ FixedActions GameState::getLegalActions() const {
 
   actions.push_back({ActionType::CHECK_CALL, to_call});
 
+  // TODO: double check that reraises work properly, looks good to my eye
   if (raises_this_street < MAX_RAISES) {
     double bet_amount =
         (street == Street::PREFLOP || street == Street::FLOP) ? 1.0 : 2.0;
@@ -75,6 +77,7 @@ void GameState::applyAction(const Action &action) {
   if (action.type == ActionType::FOLD) {
     is_folded = true;
     history[history_length++] = 'f';
+    // all history additions must be null terminated
     history[history_length] = '\0';
     return;
   }
@@ -133,6 +136,7 @@ void GameState::nextStreet() {
     street = Street::SHOWDOWN;
 
   if (street != Street::SHOWDOWN) {
+    // have history terminator
     history[history_length++] = '/';
     history[history_length] = '\0';
   }
